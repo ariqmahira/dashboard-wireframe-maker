@@ -1,0 +1,52 @@
+import { useState } from 'react';
+import { Button, Modal } from 'antd';
+import { FilterOutlined } from '@ant-design/icons';
+import { FilterControl } from './FilterItem';
+import { useBuilderStore } from '../../store/useBuilderStore';
+import type { Filter } from '../../store/types';
+
+function FilterRows({ filters }: { filters: Filter[] }) {
+  return (
+    <>
+      {filters.map((f) => (
+        <div key={f.id} style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: '#555', marginBottom: 4 }}>{f.label}</div>
+          <FilterControl filter={f} />
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** Read-only filter panel shown in preview mode and mirroring the exported sidebar. */
+export default function FilterPreview() {
+  const { common, advanced } = useBuilderStore((s) => s.project.filters);
+  const [open, setOpen] = useState(false);
+
+  if (!common.length && !advanced.length) return null;
+
+  return (
+    <aside style={{ width: 260, flex: '0 0 auto', background: '#fff', borderLeft: '1px solid #eee', padding: 16, overflow: 'auto' }}>
+      <div style={{ fontWeight: 600, marginBottom: 14 }}>Filters</div>
+
+      {common.length > 0 && (
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, borderBottom: '1px solid #f0f0f0', paddingBottom: 6 }}>
+            Common Filter
+          </div>
+          <FilterRows filters={common} />
+        </div>
+      )}
+
+      {advanced.length > 0 && (
+        <Button block icon={<FilterOutlined />} onClick={() => setOpen(true)}>
+          Advanced Filter
+        </Button>
+      )}
+
+      <Modal title="Advanced Filter" open={open} onCancel={() => setOpen(false)} footer={null} destroyOnClose>
+        <FilterRows filters={advanced} />
+      </Modal>
+    </aside>
+  );
+}
