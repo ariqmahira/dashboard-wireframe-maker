@@ -1,0 +1,143 @@
+{
+  "meta": {
+    "name": "Sales Analytics Dashboard",
+    "version": 1,
+    "updatedAt": "2026-07-18T00:00:00.000Z"
+  },
+  "placeholders": {
+    "header": {
+      "enabled": true,
+      "size": 48,
+      "html": "<div style=\"height:100%;background:#fff;box-shadow:0 1px 4px rgba(0,21,41,.08);display:flex;align-items:center;justify-content:space-between;padding:0 24px;\"><strong style=\"color:#1f2d3d;\">Sales Analytics</strong><div style=\"display:flex;gap:10px;\"><span style=\"display:block;height:14px;width:120px;background:#e3e9f5;border-radius:12px;\"></span><span style=\"display:block;height:14px;width:60px;background:#e3e9f5;border-radius:12px;\"></span></div></div>"
+    },
+    "sidemenu": {
+      "enabled": true,
+      "size": 256,
+      "html": "<div style=\"height:100%;background:linear-gradient(#5172bb,#3e61a6);padding:34px 0 0 28px;display:flex;flex-direction:column;gap:12px;\"><span style=\"display:block;height:24px;width:160px;background:#4164a9;border-radius:12px;\"></span><span style=\"display:block;height:24px;width:110px;background:#5c80c7;border-radius:12px;\"></span><span style=\"display:block;height:24px;width:130px;background:#5c80c7;border-radius:12px;\"></span><span style=\"display:block;height:24px;width:90px;background:#5c80c7;border-radius:12px;\"></span></div>"
+    },
+    "footer": {
+      "enabled": true,
+      "size": 54,
+      "html": "<div style=\"height:100%;display:flex;align-items:center;justify-content:center;background:#f3f4f7;color:#616161;font-size:14px;\">Copyright Acme Electronics</div>"
+    }
+  },
+  "cardContainerTemplate": "<div style=\"background:#fff;border:1px solid #f0f0f0;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04);height:100%;display:flex;flex-direction:column;overflow:hidden;\">\n  {{content}}\n</div>",
+  "filters": {
+    "common": [
+      { "id": "flt-region", "type": "single-select", "label": "Region", "options": ["North", "South", "East", "West"] },
+      { "id": "flt-date", "type": "multi-date", "label": "Date Range" }
+    ],
+    "advanced": [
+      { "id": "flt-category", "type": "multi-select", "label": "Product Category", "options": ["Electronics", "Apparel", "Home", "Toys"] }
+    ]
+  },
+  "sections": [
+    {
+      "id": "sec-overview",
+      "title": "Overview",
+      "subtitle": "Key performance indicators",
+      "cards": [
+        {
+          "id": "card-revenue",
+          "type": "stat",
+          "span": 6,
+          "title": "Total Revenue",
+          "subtitle": "This month",
+          "config": { "value": "$128,430", "delta": "+12.4%", "trend": "up", "compareLabel": "vs last month" }
+        },
+        {
+          "id": "card-orders",
+          "type": "stat",
+          "span": 6,
+          "title": "Orders",
+          "subtitle": "This month",
+          "config": { "value": "3,204", "delta": "+4.1%", "trend": "up" }
+        },
+        {
+          "id": "card-aov",
+          "type": "stat",
+          "span": 6,
+          "title": "Avg Order Value",
+          "subtitle": "This month",
+          "config": { "value": "$40.08", "delta": "-1.2%", "trend": "down", "valueColor": "#cf1322" }
+        },
+        {
+          "id": "card-conversion",
+          "type": "gauge",
+          "span": 6,
+          "title": "Conversion Rate",
+          "subtitle": "Target 5%",
+          "config": { "gaugeValue": 3.8, "max": 5 }
+        }
+      ]
+    },
+    {
+      "id": "sec-performance",
+      "title": "Performance",
+      "subtitle": "Trends and breakdowns",
+      "cards": [
+        {
+          "id": "card-trend",
+          "type": "line",
+          "span": 12,
+          "title": "Revenue Trend",
+          "subtitle": "Last 6 months",
+          "config": {
+            "categories": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            "series": [
+              { "name": "2026", "data": [98000, 105000, 112000, 118000, 121000, 128430] },
+              { "name": "2025", "data": [90000, 94000, 99000, 101000, 108000, 114000] }
+            ],
+            "showLegend": true
+          },
+          "tooltip": { "enabled": true, "title": "Jun", "body": "2026: $128,430\n2025: $114,000" }
+        },
+        {
+          "id": "card-mix",
+          "type": "pie",
+          "span": 12,
+          "title": "Revenue by Category",
+          "subtitle": "This month",
+          "config": {
+            "names": ["Electronics", "Apparel", "Home", "Toys"],
+            "values": [61000, 34000, 20000, 13430]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sec-detail",
+      "title": "Details",
+      "subtitle": "Recent activity",
+      "cards": [
+        {
+          "id": "card-funnel",
+          "type": "funnel",
+          "span": 8,
+          "title": "Conversion Funnel",
+          "config": {
+            "names": ["Visits", "Signups", "Trials", "Paid", "Renewed"],
+            "values": [100, 80, 60, 40, 20]
+          }
+        },
+        {
+          "id": "card-table",
+          "type": "table",
+          "span": 16,
+          "title": "Recent Orders",
+          "subtitle": "Latest transactions",
+          "config": {
+            "columns": ["Date", "Customer", "Amount", "Status"],
+            "rows": [
+              ["2026-07-01", "Acme Corp", "$1,200", "Paid"],
+              ["2026-07-02", "Globex", "$850", "Pending"],
+              ["2026-07-03", "Initech", "$2,100", "Paid"],
+              ["2026-07-04", "Umbrella", "$430", "Overdue"]
+            ]
+          },
+          "notes": "Showing the 4 most recent orders across all regions."
+        }
+      ]
+    }
+  ]
+}

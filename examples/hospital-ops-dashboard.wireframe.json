@@ -1,0 +1,158 @@
+{
+  "meta": {
+    "name": "Hospital Operations Dashboard",
+    "version": 1,
+    "updatedAt": "2026-07-18T00:00:00.000Z"
+  },
+  "placeholders": {
+    "header": {
+      "enabled": true,
+      "size": 48,
+      "html": "<div style=\"height:100%;background:#fff;box-shadow:0 1px 4px rgba(0,21,41,.08);display:flex;align-items:center;justify-content:space-between;padding:0 24px;\"><strong style=\"color:#1f2d3d;\">Riverside General</strong><div style=\"display:flex;align-items:center;gap:12px;\"><span style=\"display:block;height:16px;width:16px;border-radius:50%;background:#e3e9f5;\"></span><span style=\"display:block;height:14px;width:110px;background:#e3e9f5;border-radius:12px;\"></span></div></div>"
+    },
+    "sidemenu": {
+      "enabled": true,
+      "size": 256,
+      "html": "<div style=\"height:100%;background:linear-gradient(#3b6ea5,#2c527d);padding:34px 0 0 28px;display:flex;flex-direction:column;gap:12px;\"><span style=\"display:block;height:24px;width:160px;background:#34608f;border-radius:12px;\"></span><span style=\"display:block;height:24px;width:120px;background:#4a7cb0;border-radius:12px;\"></span><span style=\"display:block;height:24px;width:140px;background:#4a7cb0;border-radius:12px;\"></span><span style=\"display:block;height:24px;width:100px;background:#4a7cb0;border-radius:12px;\"></span><span style=\"display:block;height:24px;width:130px;background:#4a7cb0;border-radius:12px;\"></span></div>"
+    },
+    "footer": {
+      "enabled": true,
+      "size": 54,
+      "html": "<div style=\"height:100%;display:flex;align-items:center;justify-content:center;background:#f3f4f7;color:#616161;font-size:14px;\">© Riverside General Hospital — Operations</div>"
+    }
+  },
+  "cardContainerTemplate": "<div style=\"background:#fff;border:1px solid #f0f0f0;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04);height:100%;display:flex;flex-direction:column;overflow:hidden;\">\n  {{content}}\n</div>",
+  "filters": {
+    "common": [
+      { "id": "flt-department", "type": "single-select", "label": "Department", "options": ["Emergency", "Surgery", "Pediatrics", "Cardiology", "Oncology"] },
+      { "id": "flt-daterange", "type": "multi-date", "label": "Date Range" }
+    ],
+    "advanced": [
+      { "id": "flt-ward", "type": "multi-select", "label": "Ward", "options": ["General", "ICU", "Maternity", "Isolation"] }
+    ]
+  },
+  "sections": [
+    {
+      "id": "sec-overview",
+      "title": "Overview",
+      "subtitle": "Top-line operations KPIs",
+      "cards": [
+        {
+          "id": "card-current-patients",
+          "type": "stat",
+          "span": 6,
+          "title": "Current Patients",
+          "subtitle": "Inpatients now",
+          "config": { "value": "312", "delta": "+8", "trend": "up", "compareLabel": "vs yesterday" }
+        },
+        {
+          "id": "card-avg-wait",
+          "type": "stat",
+          "span": 6,
+          "title": "Avg Wait Time",
+          "subtitle": "Emergency dept",
+          "config": { "value": "27 min", "delta": "-6 min", "trend": "down", "valueColor": "#389e0d", "compareLabel": "vs last week" }
+        },
+        {
+          "id": "card-occupancy",
+          "type": "gauge",
+          "span": 6,
+          "title": "Bed Occupancy",
+          "subtitle": "Target 90%",
+          "config": { "gaugeValue": 84, "max": 100 }
+        },
+        {
+          "id": "card-staff",
+          "type": "stat",
+          "span": 6,
+          "title": "Staff on Duty",
+          "subtitle": "Clocked in now",
+          "config": { "value": "148", "delta": "+3", "trend": "up" }
+        }
+      ]
+    },
+    {
+      "id": "sec-flow",
+      "title": "Patient Flow",
+      "subtitle": "Admissions, mix, and the ED journey",
+      "cards": [
+        {
+          "id": "card-adm-dis-trend",
+          "type": "line",
+          "span": 12,
+          "title": "Admissions vs Discharges",
+          "subtitle": "Last 7 days",
+          "config": {
+            "categories": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            "series": [
+              { "name": "Admissions", "data": [58, 63, 61, 70, 74, 52, 47] },
+              { "name": "Discharges", "data": [51, 55, 60, 64, 68, 49, 44] }
+            ],
+            "showLegend": true
+          },
+          "tooltip": { "enabled": true, "title": "Fri", "body": "Admissions: 74\nDischarges: 68" }
+        },
+        {
+          "id": "card-dept-mix",
+          "type": "pie",
+          "span": 6,
+          "title": "Patients by Department",
+          "subtitle": "Share of inpatients",
+          "config": {
+            "names": ["Emergency", "Surgery", "Pediatrics", "Cardiology", "Oncology"],
+            "values": [96, 74, 48, 55, 39]
+          }
+        },
+        {
+          "id": "card-ed-funnel",
+          "type": "funnel",
+          "span": 6,
+          "title": "ED Journey",
+          "subtitle": "Today",
+          "config": {
+            "names": ["Arrivals", "Triaged", "Seen", "Admitted", "Discharged"],
+            "values": [220, 205, 180, 84, 96]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sec-capacity",
+      "title": "Capacity & Staffing",
+      "subtitle": "Ward occupancy and recent admissions",
+      "cards": [
+        {
+          "id": "card-ward-util",
+          "type": "hbar",
+          "span": 10,
+          "title": "Bed Utilization by Ward",
+          "subtitle": "Occupied vs capacity (%)",
+          "config": {
+            "categories": ["General", "ICU", "Maternity", "Isolation"],
+            "series": [
+              { "name": "Occupancy %", "data": [88, 95, 72, 61] }
+            ]
+          }
+        },
+        {
+          "id": "card-recent-admissions",
+          "type": "table",
+          "span": 14,
+          "title": "Recent Admissions",
+          "subtitle": "Last hour",
+          "config": {
+            "columns": ["Time", "Patient", "Department", "Ward", "Status"],
+            "rows": [
+              ["09:12", "M. Alvarez", "Emergency", "ICU", "Admitted"],
+              ["09:26", "T. Okafor", "Cardiology", "General", "In Care"],
+              ["09:41", "S. Petrova", "Pediatrics", "General", "Observation"],
+              ["09:58", "L. Nguyen", "Surgery", "General", "Pre-Op"],
+              ["10:07", "R. Haddad", "Oncology", "Isolation", "Admitted"]
+            ]
+          },
+          "notes": "Live feed — showing admissions from the last 60 minutes."
+        }
+      ]
+    }
+  ]
+}
