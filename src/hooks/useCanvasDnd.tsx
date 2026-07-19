@@ -9,7 +9,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core';
 import { useBuilderStore } from '../store/useBuilderStore';
-import { CHART_LABELS, type ChartType } from '../store/types';
+import { CHART_LABELS, FILTER_LABELS, type ChartType, type FilterType } from '../store/types';
 
 type Sections = ReturnType<typeof useBuilderStore.getState>['project']['sections'];
 
@@ -46,10 +46,30 @@ export function useCanvasDnd() {
     setActiveId(null);
     if (!e.over) return;
     const { project } = useBuilderStore.getState();
-    const { moveCard, addCard } = useBuilderStore.getState();
-    const target = targetSectionAndIndex(project.sections, String(e.over.id));
+    const overId = String(e.over.id);
+
+    // Reordering whole sections (drag handle in the section header).
+    if (active.startsWith('section-move:')) {
+      const { moveSection } = useBuilderStore.getState();
+      const fromIndex = project.sections.findIndex((s) => s.id === active.slice('section-move:'.length));
+      let toId: string | null = null;
+      if (overId.startsWith('section-move:')) toId = overId.slice('section-move:'.length);
+      else if (overId.startsWith('section:')) toId = overId.slice('section:'.length);
+      else toId = locateCard(project.sections, overId)?.sectionId ?? null;
+      const toIndex = toId ? project.sections.findIndex((s) => s.id === toId) : -1;
+      if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+      moveSection(fromIndex, toIndex);
+      return;
+    }
+
+    const { moveCard, addCard, addFilterCard } = useBuilderStore.getState();
+    const target = targetSectionAndIndex(project.sections, overId);
     if (!target) return;
 
+    if (active.startsWith('palette:filter:')) {
+      addFilterCard(target.sectionId, active.slice('palette:filter:'.length) as FilterType);
+      return;
+    }
     if (active.startsWith('palette:')) {
       addCard(target.sectionId, active.slice('palette:'.length) as ChartType);
       return;
@@ -64,7 +84,9 @@ export function useCanvasDnd() {
     <DragOverlay>
       {isPalette && activeId && (
         <div style={{ padding: '8px 12px', background: '#1677ff', color: '#fff', borderRadius: 6, fontSize: 13 }}>
-          {CHART_LABELS[activeId.slice('palette:'.length) as ChartType]}
+          {activeId.startsWith('palette:filter:')
+            ? FILTER_LABELS[activeId.slice('palette:filter:'.length) as FilterType]
+            : CHART_LABELS[activeId.slice('palette:'.length) as ChartType]}
         </div>
       )}
     </DragOverlay>

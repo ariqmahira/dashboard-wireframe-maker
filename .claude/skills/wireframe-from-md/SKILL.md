@@ -66,8 +66,15 @@ known-good file to use as a template is **`example.json`**. The validator is **`
     ECharts option → `customEcharts`.
 - **"Filter by X", "filterable by", "slice by"** → a `Filter`. Text/enum dimension →
   `single-select` or `multi-select` (fill `options` from any values listed); date/period →
-  `single-date` or `multi-date` (range). Put primary filters in `common`, secondary in
-  `advanced`.
+  `single-date` or `multi-date` (range). Choose **where** the filter lives:
+  - Dashboard-wide filters (page controls, "global filters") → the right-side panel:
+    primary in `filters.common`, secondary in `filters.advanced`.
+  - A filter the spec places **inline in a section / next to charts** ("a Region dropdown at
+    the top of the Sales section") → a **standalone filter card** (`type: "filter"`, span ~6,
+    with a `filter` object; no `config`). It renders without a card container.
+  - A filter that applies to **one specific chart** ("this chart can be filtered by segment",
+    "per-widget filter") → add `cardFilter: { enabled: true, filters: [...] }` to that card.
+  See `reference.md` → "Filter components" for exact shapes.
 - **Header / sidebar / footer / branding notes** → the matching `placeholders` entry; keep
   `example.json`'s skeleton HTML if the requirements don't specify chrome.
 

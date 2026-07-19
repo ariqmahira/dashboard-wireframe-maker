@@ -77,6 +77,13 @@
       "subtitle": "Trends and breakdowns",
       "cards": [
         {
+          "id": "flt-card-metric",
+          "type": "filter",
+          "span": 6,
+          "title": "Filter",
+          "filter": { "id": "flt-metric", "type": "single-select", "label": "Metric", "options": ["Revenue", "Orders", "Margin"] }
+        },
+        {
           "id": "card-trend",
           "type": "line",
           "span": 12,
@@ -89,6 +96,12 @@
               { "name": "2025", "data": [90000, 94000, 99000, 101000, 108000, 114000] }
             ],
             "showLegend": true
+          },
+          "cardFilter": {
+            "enabled": true,
+            "filters": [
+              { "id": "flt-trend-segment", "type": "single-select", "label": "Segment", "options": ["All", "Enterprise", "SMB"] }
+            ]
           },
           "tooltip": { "enabled": true, "title": "Jun", "body": "2026: $128,430\n2025: $114,000" }
         },

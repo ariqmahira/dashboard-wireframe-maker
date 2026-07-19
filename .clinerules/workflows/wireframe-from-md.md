@@ -54,9 +54,10 @@ Read those for full detail. The output is byte-compatible with the Claude skill'
   for the select types).
 - `sections`: `Section[]`; `Section = { id, title, subtitle?, cards: Card[] }`.
 
-`Card = { id, type, span (1..24 int), title, subtitle?, config?, notes?, tooltip?, containerHtml? }`.
+`Card = { id, type, span (1..24 int), title, subtitle?, config?, notes?, tooltip?, containerHtml?,
+filter?, cardFilter? }`.
 `type` ∈ `line | bar | hbar | area | pie | scatter | gauge | radar | funnel | heatmap | stat |
-table | image | customHtml | customEcharts`.
+table | image | customHtml | customEcharts | filter`.
 
 `config` per type:
 - line/area/bar/hbar → `categories: string[]`, `series: {name, data: number[]}[]`, `showLegend?`
@@ -69,6 +70,12 @@ table | image | customHtml | customEcharts`.
 
 Numeric fields are numbers, not strings. `table.rows` are arrays of strings.
 
+**Filters attached to cards** (`Filter = { id, type, label, options? }`, ids globally unique):
+- `type: "filter"` → a **standalone filter card**, rendered without a card container. No
+  `config`; carries a single `filter` object instead. Use a small `span` (~6).
+- `cardFilter: { enabled: boolean, filters: Filter[] }` → optional **inline filter bar on top
+  of a chart**, within its card. Add to any chart card that needs its own filter; omit otherwise.
+
 ## Markdown → model mapping
 
 - Doc title (`#`) → `meta.name`. `##`/`###` headings or grouped bullets → a `Section` each.
@@ -78,7 +85,9 @@ Numeric fields are numbers, not strings. `table.rows` are arrays of strings.
   density grid → `heatmap`; record list → `table`; image → `image`; raw markup → `customHtml`;
   supplied ECharts option → `customEcharts`.
 - "Filter by X" → a `Filter` (enum dimension → select with `options`; date/period → date
-  types). Primary filters in `common`, secondary in `advanced`.
+  types). Choose where it lives: dashboard-wide → right panel (`filters.common` primary,
+  `filters.advanced` secondary); inline in a section → a standalone `type: "filter"` card
+  (span ~6, no `config`); applies to one chart → that card's `cardFilter.filters`.
 - Header/sidebar/footer/branding notes → the matching `placeholders`; keep `example.json`'s
   skeleton HTML if unspecified.
 

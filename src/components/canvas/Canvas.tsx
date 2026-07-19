@@ -1,5 +1,6 @@
 import { Button, Empty } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import SectionBlock from './SectionBlock';
 import PlaceholderFrame from './PlaceholderFrame';
 import FilterPreview from '../filters/FilterPreview';
@@ -28,9 +29,14 @@ export default function Canvas({
         <PlaceholderFrame onEdit={onEditPlaceholder}>
           <div style={{ display: 'flex' }}>
             <div style={{ flex: 1, minWidth: 0, paddingRight: preview ? 16 : 0 }}>
-              {sections.map((section) => (
-                <SectionBlock key={section.id} section={section} onEditCardHtml={onEditCardHtml} />
-              ))}
+              <SortableContext
+                items={sections.map((s) => `section-move:${s.id}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {sections.map((section) => (
+                  <SectionBlock key={section.id} section={section} onEditCardHtml={onEditCardHtml} />
+                ))}
+              </SortableContext>
               {sections.length === 0 && <Empty description="No sections yet" style={{ padding: 40 }} />}
               {!preview && (
                 <Button

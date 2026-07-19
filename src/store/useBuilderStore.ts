@@ -12,7 +12,7 @@ import type {
   Section,
   Selection,
 } from './types';
-import { createDefaultProject, makeCard } from './defaultProject';
+import { createDefaultProject, makeCard, makeFilter, makeFilterCard } from './defaultProject';
 
 type PlaceholderKey = 'header' | 'sidemenu' | 'footer';
 
@@ -25,12 +25,16 @@ interface BuilderState {
   addSection: () => void;
   updateSection: (id: string, patch: Partial<Omit<Section, 'id' | 'cards'>>) => void;
   removeSection: (id: string) => void;
+  moveSection: (fromIndex: number, toIndex: number) => void;
 
   addCard: (sectionId: string, type: ChartType) => void;
+  addFilterCard: (sectionId: string, type: FilterType) => void;
   updateCard: (sectionId: string, cardId: string, patch: Partial<Omit<Card, 'id'>>) => void;
   removeCard: (sectionId: string, cardId: string) => void;
   duplicateCard: (sectionId: string, cardId: string) => void;
   setSpan: (sectionId: string, cardId: string, span: number) => void;
+  setOffset: (sectionId: string, cardId: string, offset: number) => void;
+  setRowSpan: (sectionId: string, cardId: string, rowSpan: number) => void;
   moveCard: (
     fromSectionId: string,
     fromIndex: number,
@@ -108,9 +112,29 @@ export const useBuilderStore = create<BuilderState>()(
           selection: null,
         })),
 
+      moveSection: (fromIndex, toIndex) =>
+        set((st) => ({
+          project: mapSections(st.project, (sections) => {
+            if (fromIndex < 0 || fromIndex >= sections.length) return sections;
+            const next = [...sections];
+            const [moved] = next.splice(fromIndex, 1);
+            next.splice(Math.min(Math.max(0, toIndex), next.length), 0, moved);
+            return next;
+          }),
+        })),
+
       addCard: (sectionId, type) =>
         set((st) => {
           const card = makeCard(type);
+          return {
+            project: updateSectionCards(st.project, sectionId, (cards) => [...cards, card]),
+            selection: { kind: 'card', sectionId, cardId: card.id },
+          };
+        }),
+
+      addFilterCard: (sectionId, type) =>
+        set((st) => {
+          const card = makeFilterCard(type);
           return {
             project: updateSectionCards(st.project, sectionId, (cards) => [...cards, card]),
             selection: { kind: 'card', sectionId, cardId: card.id },
@@ -151,6 +175,20 @@ export const useBuilderStore = create<BuilderState>()(
           ),
         })),
 
+      setOffset: (sectionId, cardId, offset) =>
+        set((st) => ({
+          project: updateSectionCards(st.project, sectionId, (cards) =>
+            cards.map((c) => (c.id === cardId ? { ...c, offset: Math.min(23, Math.max(0, offset)) } : c))
+          ),
+        })),
+
+      setRowSpan: (sectionId, cardId, rowSpan) =>
+        set((st) => ({
+          project: updateSectionCards(st.project, sectionId, (cards) =>
+            cards.map((c) => (c.id === cardId ? { ...c, rowSpan: Math.min(24, Math.max(1, rowSpan)) } : c))
+          ),
+        })),
+
       moveCard: (fromSectionId, fromIndex, toSectionId, toIndex) =>
         set((st) => {
           const fromSection = st.project.sections.find((s) => s.id === fromSectionId);
@@ -184,12 +222,7 @@ export const useBuilderStore = create<BuilderState>()(
 
       addFilter: (group, type) =>
         set((st) => {
-          const filter: Filter = {
-            id: nanoid(8),
-            type,
-            label: 'New Filter',
-            options: type.includes('select') ? ['Option A', 'Option B', 'Option C'] : undefined,
-          };
+          const filter: Filter = makeFilter(type, 'New Filter');
           return {
             project: touch({
               ...st.project,

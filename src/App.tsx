@@ -17,6 +17,7 @@ type ModalState =
   | { kind: 'placeholder'; key: PlaceholderKey }
   | { kind: 'template' }
   | { kind: 'card'; card: Card }
+  | { kind: 'customHtml'; card: Card; sectionId: string }
   | null;
 
 const PLACEHOLDER_TITLES: Record<PlaceholderKey, string> = {
@@ -70,7 +71,25 @@ export default function App() {
           title="Edit Card Container Template"
           hint="Use {{content}} where the chart/title should render. Applies to all cards without a custom override."
           value={project.cardContainerTemplate}
+          slotToken
           onSave={(html) => setCardTemplate(html)}
+          onClose={() => setModal(null)}
+        />
+      );
+    }
+
+    if (modal.kind === 'customHtml') {
+      return (
+        <HtmlEditorModal
+          open
+          title="Edit Custom HTML"
+          hint="Style this card's content visually, or switch to Code for raw HTML."
+          value={modal.card.config?.customHtml ?? ''}
+          onSave={(html) =>
+            updateCard(modal.sectionId, modal.card.id, {
+              config: { ...modal.card.config, customHtml: html },
+            })
+          }
           onClose={() => setModal(null)}
         />
       );
@@ -83,6 +102,7 @@ export default function App() {
         title="Edit Card Container (this card)"
         hint="Use {{content}} where the chart/title should render. Overrides the global template for this card only."
         value={modal.card.containerHtml || project.cardContainerTemplate}
+        slotToken
         onSave={(html) => {
           const sectionId = findCardSection(modal.card.id);
           if (sectionId) updateCard(sectionId, modal.card.id, { containerHtml: html });
@@ -93,6 +113,7 @@ export default function App() {
   }
 
   const openCardHtml = (card: Card) => setModal({ kind: 'card', card });
+  const openCustomHtml = (card: Card, sectionId: string) => setModal({ kind: 'customHtml', card, sectionId });
   const openPlaceholder = (key: PlaceholderKey) => setModal({ kind: 'placeholder', key });
 
   return (
@@ -118,7 +139,7 @@ export default function App() {
           </Content>
           {!preview && (
             <Sider width={320} theme="light" style={{ borderLeft: '1px solid #f0f0f0' }}>
-              <RightPanel onEditCardHtml={openCardHtml} />
+              <RightPanel onEditCardHtml={openCardHtml} onEditCustomHtml={openCustomHtml} />
             </Sider>
           )}
         </Layout>

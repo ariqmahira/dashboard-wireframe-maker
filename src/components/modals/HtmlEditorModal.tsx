@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Alert, Modal } from 'antd';
+import { Alert, Modal, Segmented } from 'antd';
 import { RawHtml } from '../common/Html';
+import VisualHtmlEditor from './VisualHtmlEditor';
 
 export default function HtmlEditorModal({
   open,
@@ -8,6 +9,7 @@ export default function HtmlEditorModal({
   value,
   hint,
   extra,
+  slotToken,
   onSave,
   onClose,
 }: {
@@ -16,12 +18,17 @@ export default function HtmlEditorModal({
   value: string;
   hint?: string;
   extra?: ReactNode;
+  slotToken?: boolean;
   onSave: (html: string) => void;
   onClose: () => void;
 }) {
   const [draft, setDraft] = useState(value);
+  const [mode, setMode] = useState<'visual' | 'code'>('visual');
   useEffect(() => {
-    if (open) setDraft(value);
+    if (open) {
+      setDraft(value);
+      setMode('visual');
+    }
   }, [open, value]);
 
   return (
@@ -38,6 +45,18 @@ export default function HtmlEditorModal({
     >
       {hint && <Alert type="info" showIcon message={hint} style={{ marginBottom: 12 }} />}
       {extra}
+      <Segmented
+        value={mode}
+        onChange={(m) => setMode(m as 'visual' | 'code')}
+        options={[
+          { label: 'Visual', value: 'visual' },
+          { label: 'Code', value: 'code' },
+        ]}
+        style={{ marginTop: 8, marginBottom: 8 }}
+      />
+      {mode === 'visual' ? (
+        <VisualHtmlEditor value={draft} onChange={setDraft} slotToken={slotToken} />
+      ) : (
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
         <div>
           <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>HTML</div>
@@ -64,6 +83,7 @@ export default function HtmlEditorModal({
           </div>
         </div>
       </div>
+      )}
     </Modal>
   );
 }

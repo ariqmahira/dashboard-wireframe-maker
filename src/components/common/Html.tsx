@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import DOMPurify from 'dompurify';
+import { sanitizeHtml } from './sanitize';
 
 const SLOT_MARK = '<div data-cwb-slot="1" style="height:100%;display:flex;flex-direction:column;"></div>';
 
-const purifyConfig = { ADD_ATTR: ['data-cwb-slot', 'target'] };
-
 /** Render sanitized raw HTML (used for header/sidemenu/footer placeholders). */
 export function RawHtml({ html, style }: { html: string; style?: CSSProperties }) {
-  const clean = DOMPurify.sanitize(html, purifyConfig);
+  const clean = sanitizeHtml(html);
   return <div style={style} dangerouslySetInnerHTML={{ __html: clean }} />;
 }
 
@@ -32,7 +30,7 @@ export function SlottedHtml({
   const withSlot = html.includes('{{content}}')
     ? html.replace('{{content}}', SLOT_MARK)
     : html + SLOT_MARK;
-  const clean = DOMPurify.sanitize(withSlot, purifyConfig);
+  const clean = sanitizeHtml(withSlot);
 
   // Set innerHTML manually so React never manages (and never wipes) the slot
   // node we portal live content into.

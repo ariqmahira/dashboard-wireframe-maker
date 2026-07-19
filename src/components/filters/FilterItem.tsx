@@ -1,7 +1,7 @@
-import { Button, DatePicker, Input, Select, Space } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
-import { FILTER_LABELS, type Filter, type FilterGroup, type FilterType } from '../../store/types';
+import { DatePicker, Select } from 'antd';
+import type { Filter, FilterGroup } from '../../store/types';
 import { useBuilderStore } from '../../store/useBuilderStore';
+import FilterEditor from './FilterEditor';
 
 const { RangePicker } = DatePicker;
 
@@ -23,44 +23,12 @@ export function FilterControl({ filter }: { filter: Filter }) {
 
 export default function FilterItem({ group, filter }: { group: FilterGroup; filter: Filter }) {
   const { updateFilter, removeFilter } = useBuilderStore.getState();
-  const isSelect = filter.type.includes('select');
 
   return (
-    <div style={{ border: '1px solid #f0f0f0', borderRadius: 8, padding: 10, marginBottom: 8, background: '#fff' }}>
-      <Space.Compact style={{ width: '100%', marginBottom: 8 }}>
-        <Input
-          value={filter.label}
-          onChange={(e) => updateFilter(group, filter.id, { label: e.target.value })}
-          placeholder="Label"
-        />
-        <Button danger icon={<DeleteOutlined />} onClick={() => removeFilter(group, filter.id)} />
-      </Space.Compact>
-
-      <Select
-        size="small"
-        value={filter.type}
-        style={{ width: '100%', marginBottom: 8 }}
-        onChange={(type: FilterType) =>
-          updateFilter(group, filter.id, {
-            type,
-            options: type.includes('select') ? filter.options ?? ['Option A', 'Option B'] : undefined,
-          })
-        }
-        options={(Object.keys(FILTER_LABELS) as FilterType[]).map((t) => ({ value: t, label: FILTER_LABELS[t] }))}
-      />
-
-      {isSelect && (
-        <Select
-          mode="tags"
-          size="small"
-          value={filter.options ?? []}
-          placeholder="Type options + Enter"
-          style={{ width: '100%', marginBottom: 8 }}
-          onChange={(options: string[]) => updateFilter(group, filter.id, { options })}
-        />
-      )}
-
-      <FilterControl filter={filter} />
-    </div>
+    <FilterEditor
+      filter={filter}
+      onChange={(patch) => updateFilter(group, filter.id, patch)}
+      onRemove={() => removeFilter(group, filter.id)}
+    />
   );
 }

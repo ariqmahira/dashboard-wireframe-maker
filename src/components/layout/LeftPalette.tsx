@@ -6,9 +6,11 @@ import {
   BarsOutlined,
   BorderOutlined,
   CodeOutlined,
+  CalendarOutlined,
   DotChartOutlined,
   ExperimentOutlined,
   FieldNumberOutlined,
+  FilterOutlined,
   FundOutlined,
   HeatMapOutlined,
   LineChartOutlined,
@@ -16,10 +18,17 @@ import {
   PieChartOutlined,
   PlusOutlined,
   RadarChartOutlined,
+  SelectOutlined,
   TableOutlined,
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
-import { CHART_LABELS, CHART_TYPES, type ChartType } from '../../store/types';
+import {
+  CHART_LABELS,
+  CHART_TYPES,
+  FILTER_LABELS,
+  type ChartType,
+  type FilterType,
+} from '../../store/types';
 import { useBuilderStore } from '../../store/useBuilderStore';
 
 const ICONS: Record<ChartType, ReactNode> = {
@@ -38,6 +47,14 @@ const ICONS: Record<ChartType, ReactNode> = {
   image: <PictureOutlined />,
   customHtml: <CodeOutlined />,
   customEcharts: <ExperimentOutlined />,
+  filter: <FilterOutlined />,
+};
+
+const FILTER_ICONS: Record<FilterType, ReactNode> = {
+  'single-select': <SelectOutlined />,
+  'multi-select': <SelectOutlined />,
+  'single-date': <CalendarOutlined />,
+  'multi-date': <CalendarOutlined />,
 };
 
 function AreaIcon() {
@@ -47,8 +64,8 @@ function FilterIcon() {
   return <BorderOutlined />;
 }
 
-function PaletteTile({ type }: { type: ChartType }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `palette:${type}` });
+function DraggableTile({ id, icon, label }: { id: string; icon: ReactNode; label: string }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id });
   return (
     <div
       ref={setNodeRef}
@@ -68,10 +85,11 @@ function PaletteTile({ type }: { type: ChartType }) {
         fontSize: 12,
         color: '#555',
         userSelect: 'none',
+        textAlign: 'center',
       }}
     >
-      <span style={{ fontSize: 18, color: '#1677ff' }}>{ICONS[type]}</span>
-      {CHART_LABELS[type]}
+      <span style={{ fontSize: 18, color: '#1677ff' }}>{icon}</span>
+      {label}
     </div>
   );
 }
@@ -92,7 +110,18 @@ export default function LeftPalette({
       </Typography.Paragraph>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {CHART_TYPES.map((t) => (
-          <PaletteTile key={t} type={t} />
+          <DraggableTile key={t} id={`palette:${t}`} icon={ICONS[t]} label={CHART_LABELS[t]} />
+        ))}
+      </div>
+
+      <Divider style={{ margin: '16px 0 12px' }} />
+      <Typography.Text strong>Filters</Typography.Text>
+      <Typography.Paragraph type="secondary" style={{ fontSize: 11, marginTop: 2 }}>
+        Drag a filter onto a section (no card container)
+      </Typography.Paragraph>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {(Object.keys(FILTER_LABELS) as FilterType[]).map((t) => (
+          <DraggableTile key={t} id={`palette:filter:${t}`} icon={FILTER_ICONS[t]} label={FILTER_LABELS[t]} />
         ))}
       </div>
 

@@ -48,7 +48,12 @@ Sections are always full width. Cards inside flow left→right on a 24-column gr
   "config"?: CardConfig,     // type-specific data — see per-type table
   "notes"?: string,          // footnote annotation on the card
   "tooltip"?: { "enabled": boolean, "title": string, "body": string },
-  "containerHtml"?: string   // optional per-card override of cardContainerTemplate
+  "containerHtml"?: string,  // optional per-card override of cardContainerTemplate
+  "filter"?: Filter,         // ONLY for type "filter" — the standalone filter (no config)
+  "cardFilter"?: {           // OPTIONAL on any chart card — inline filter bar on top of the chart
+    "enabled": boolean,
+    "filters": Filter[]
+  }
 }
 ```
 
@@ -56,7 +61,37 @@ Sections are always full width. Cards inside flow left→right on a 24-column gr
 
 ### `ChartType` enum
 `line`, `bar`, `hbar`, `area`, `pie`, `scatter`, `gauge`, `radar`, `funnel`, `heatmap`,
-`stat`, `table`, `image`, `customHtml`, `customEcharts`.
+`stat`, `table`, `image`, `customHtml`, `customEcharts`, `filter`.
+
+### Filter components (`type: "filter"`) and per-chart filters
+
+Two ways filters attach to the canvas (in addition to the right-side `filters.common` /
+`filters.advanced` panel):
+
+- **Standalone filter component** — a card with `type: "filter"`. It renders **without a card
+  container** (bare control, no white chrome). It has **no `config`**; instead it carries a
+  single `filter` object (same shape as a `Filter`, see below). Give it a small `span`
+  (typically **6**) and any `title` (the app uses the filter's own `label` for display).
+
+  ```jsonc
+  {
+    "id": "flt-card-metric", "type": "filter", "span": 6, "title": "Filter",
+    "filter": { "id": "flt-metric", "type": "single-select", "label": "Metric", "options": ["Revenue", "Orders"] }
+  }
+  ```
+
+- **Per-chart filter bar** — any chart/table/etc. card may add `cardFilter` to show a filter
+  row **on top of the chart, inside the card**. Set `enabled: true` and list one or more
+  `filters` (each a `Filter`). Omit `cardFilter` entirely for cards that don't need it.
+
+  ```jsonc
+  "cardFilter": {
+    "enabled": true,
+    "filters": [ { "id": "flt-seg", "type": "single-select", "label": "Segment", "options": ["All", "Enterprise", "SMB"] } ]
+  }
+  ```
+
+Every `filter.id` inside these (like all ids) must be globally unique across the document.
 
 ### `CardConfig` — use only the fields for the card's type
 

@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 const CHART_TYPES = [
   'line', 'bar', 'hbar', 'area', 'pie', 'scatter', 'gauge', 'radar',
   'funnel', 'heatmap', 'stat', 'table', 'image', 'customHtml', 'customEcharts',
+  'filter',
 ];
 const FILTER_TYPES = ['single-select', 'multi-select', 'single-date', 'multi-date'];
 
@@ -107,18 +108,7 @@ if (!isObj(doc)) {
         err(`filters.${group}: must be an array.`);
         continue;
       }
-      list.forEach((f, i) => {
-        const where = `filters.${group}[${i}]`;
-        if (!isObj(f)) { err(`${where}: must be an object.`); return; }
-        checkId(f.id, where);
-        if (!FILTER_TYPES.includes(f.type)) err(`${where}.type: "${f.type}" is not one of ${FILTER_TYPES.join(', ')}.`);
-        if (!isStr(f.label)) err(`${where}.label: must be a string.`);
-        if ((f.type === 'single-select' || f.type === 'multi-select')) {
-          if (!Array.isArray(f.options) || f.options.length === 0) {
-            err(`${where}.options: select filters need a non-empty string array.`);
-          }
-        }
-      });
+      list.forEach((f, i) => validateFilter(f, `filters.${group}[${i}]`));
     }
   }
 
@@ -134,6 +124,20 @@ if (!isObj(doc)) {
       if (!Array.isArray(s.cards)) { err(`${sWhere}.cards: must be an array.`); return; }
       s.cards.forEach((c, ci) => validateCard(c, `${sWhere}.cards[${ci}]`));
     });
+  }
+}
+
+// A single Filter definition (used by filters.common/advanced, filter cards, and
+// per-card filter bars). Ids are tracked for global uniqueness like everything else.
+function validateFilter(f, where) {
+  if (!isObj(f)) { err(`${where}: must be an object.`); return; }
+  checkId(f.id, where);
+  if (!FILTER_TYPES.includes(f.type)) err(`${where}.type: "${f.type}" is not one of ${FILTER_TYPES.join(', ')}.`);
+  if (!isStr(f.label)) err(`${where}.label: must be a string.`);
+  if (f.type === 'single-select' || f.type === 'multi-select') {
+    if (!Array.isArray(f.options) || f.options.length === 0) {
+      err(`${where}.options: select filters need a non-empty string array.`);
+    }
   }
 }
 
@@ -220,6 +224,24 @@ function validateCard(c, where) {
         try { JSON.parse(cf.echartsJson); } catch { err(`${where}.config.echartsJson: must itself be valid JSON (a stringified ECharts option).`); }
       });
       break;
+  }
+
+  // Standalone filter component: needs `filter`, ignores chart `config`.
+  if (c.type === 'filter') {
+    if (!isObj(c.filter)) err(`${where}.filter: a "filter" card needs a filter object { id, type, label, options? }.`);
+    else validateFilter(c.filter, `${where}.filter`);
+  }
+
+  // Optional in-card filter bar (any chart card): { enabled, filters: Filter[] }.
+  if (c.cardFilter !== undefined) {
+    const cf = c.cardFilter;
+    if (!isObj(cf)) {
+      err(`${where}.cardFilter: must be an object { enabled: boolean, filters: Filter[] }.`);
+    } else {
+      if (typeof cf.enabled !== 'boolean') err(`${where}.cardFilter.enabled: must be boolean.`);
+      if (!Array.isArray(cf.filters)) err(`${where}.cardFilter.filters: must be an array of filters.`);
+      else cf.filters.forEach((f, i) => validateFilter(f, `${where}.cardFilter.filters[${i}]`));
+    }
   }
 
   if (c.tooltip !== undefined) {

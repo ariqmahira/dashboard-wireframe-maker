@@ -1,10 +1,13 @@
+import { Fragment } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
-import { Button, Dropdown, Empty, Row, Space, Tooltip, Typography } from 'antd';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Button, Col, Dropdown, Empty, Row, Space, Tooltip, Typography } from 'antd';
+import { ControlOutlined, DeleteOutlined, HolderOutlined, PlusOutlined } from '@ant-design/icons';
 import ChartCard from './ChartCard';
 import { useBuilderStore } from '../../store/useBuilderStore';
 import { CHART_LABELS, CHART_TYPES, type Card, type ChartType, type Section } from '../../store/types';
+import { computeRowGroups, rowUsedSpan } from '../../store/rows';
 
 export default function SectionBlock({
   section,
@@ -24,10 +27,21 @@ export default function SectionBlock({
     data: { sectionId: section.id, container: true },
   });
 
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: `section-move:${section.id}`, data: { sectionId: section.id }, disabled: preview });
+
   const menuItems = CHART_TYPES.map((t) => ({ key: t, label: CHART_LABELS[t] }));
 
   return (
     <div
+      ref={setSortableRef}
+      id={`cwb-sec-${section.id}`}
       onClick={() => !preview && select({ kind: 'section', sectionId: section.id })}
       style={{
         border: preview ? 'none' : '1px dashed #d9d9d9',
@@ -35,7 +49,11 @@ export default function SectionBlock({
         borderRadius: 8,
         padding: preview ? 0 : 12,
         marginBottom: 16,
+        scrollMarginTop: 16,
         background: preview ? 'transparent' : '#fafafa',
+        transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
       }}
     >
       {!preview && (
@@ -57,6 +75,23 @@ export default function SectionBlock({
             </Typography.Text>
           </div>
           <Space onClick={(e) => e.stopPropagation()}>
+            <Tooltip title="Drag to reorder section">
+              <Button
+                size="small"
+                icon={<HolderOutlined />}
+                style={{ cursor: 'grab' }}
+                {...attributes}
+                {...listeners}
+              />
+            </Tooltip>
+            <Tooltip title="Edit section properties">
+              <Button
+                size="small"
+                type={selected ? 'primary' : 'default'}
+                icon={<ControlOutlined />}
+                onClick={() => select({ kind: 'section', sectionId: section.id })}
+              />
+            </Tooltip>
             <Dropdown
               menu={{ items: menuItems, onClick: ({ key }) => addCard(section.id, key as ChartType) }}
               trigger={['click']}
@@ -88,9 +123,17 @@ export default function SectionBlock({
       >
         <SortableContext items={section.cards.map((c) => c.id)} strategy={rectSortingStrategy}>
           <Row gutter={[12, 12]} wrap>
-            {section.cards.map((card) => (
-              <ChartCard key={card.id} card={card} sectionId={section.id} onEditHtml={onEditCardHtml} />
-            ))}
+            {computeRowGroups(section.cards).map((row, ri, all) => {
+              const leftover = 24 - rowUsedSpan(row);
+              return (
+                <Fragment key={row[0].id}>
+                  {row.map((card) => (
+                    <ChartCard key={card.id} card={card} sectionId={section.id} onEditHtml={onEditCardHtml} />
+                  ))}
+                  {ri < all.length - 1 && leftover > 0 && <Col span={leftover} aria-hidden />}
+                </Fragment>
+              );
+            })}
           </Row>
         </SortableContext>
 

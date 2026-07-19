@@ -1,10 +1,20 @@
 import { nanoid } from 'nanoid';
-import type { Card, ChartType, Project } from './types';
+import { FILTER_LABELS, type Card, type ChartType, type Filter, type FilterType, type Project } from './types';
 import { DEFAULT_ECHARTS_JSON } from '../charts/chartOptions';
 
 export const DEFAULT_CARD_TEMPLATE = `<div style="background:#fff;border:1px solid #f0f0f0;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,0.04);height:100%;display:flex;flex-direction:column;overflow:hidden;">
   {{content}}
 </div>`;
+
+/** Build a filter definition with sensible defaults for its type. */
+export function makeFilter(type: FilterType, label = FILTER_LABELS[type]): Filter {
+  return {
+    id: nanoid(8),
+    type,
+    label,
+    options: type.includes('select') ? ['Option A', 'Option B', 'Option C'] : undefined,
+  };
+}
 
 export function makeCard(type: ChartType, span = 8): Card {
   const titles: Record<ChartType, string> = {
@@ -23,15 +33,20 @@ export function makeCard(type: ChartType, span = 8): Card {
     image: 'Image',
     customHtml: 'Custom Block',
     customEcharts: 'Custom Chart',
+    filter: 'Filter',
   };
   const base: Card = {
     id: nanoid(8),
     type,
-    span: type === 'stat' ? 6 : span,
+    span: type === 'stat' || type === 'filter' ? 6 : span,
     title: titles[type],
     subtitle: 'Sample subtitle',
   };
-  if (type === 'stat') {
+  if (type === 'filter') {
+    base.title = 'Filter';
+    base.subtitle = undefined;
+    base.filter = makeFilter('single-select');
+  } else if (type === 'stat') {
     base.config = { value: '$128,430', delta: '+12.4%', trend: 'up' };
   } else if (type === 'customHtml') {
     base.config = { customHtml: '<div style="padding:24px;text-align:center;color:#888;border:1px dashed #d9d9d9;border-radius:8px;">Custom HTML block</div>' };
@@ -39,6 +54,13 @@ export function makeCard(type: ChartType, span = 8): Card {
     base.config = { echartsJson: DEFAULT_ECHARTS_JSON };
   }
   return base;
+}
+
+/** Build a standalone filter card (no card container) of the given filter type. */
+export function makeFilterCard(type: FilterType): Card {
+  const card = makeCard('filter');
+  card.filter = makeFilter(type);
+  return card;
 }
 
 // Skeleton-style header pills (light bars on a white header, right-aligned).

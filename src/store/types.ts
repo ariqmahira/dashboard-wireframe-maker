@@ -13,8 +13,10 @@ export type ChartType =
   | 'table'
   | 'image'
   | 'customHtml'
-  | 'customEcharts';
+  | 'customEcharts'
+  | 'filter';
 
+/** Chart types that appear in the chart palette / "Add chart" menus (excludes `filter`). */
 export const CHART_TYPES: ChartType[] = [
   'line',
   'bar',
@@ -49,6 +51,7 @@ export const CHART_LABELS: Record<ChartType, string> = {
   image: 'Image',
   customHtml: 'Custom HTML',
   customEcharts: 'Custom ECharts',
+  filter: 'Filter',
 };
 
 /** A mockup of a chart's hover tooltip (shown pinned in the wireframe). */
@@ -100,6 +103,9 @@ export interface Card {
   id: string;
   type: ChartType;
   span: number; // 1..24 Antd Col span
+  offset?: number; // 0..23 Antd Col offset (empty columns to the left)
+  rowStart?: boolean; // force a line break before this card (begin a new row)
+  rowSpan?: number; // 1..24 target total width of the row this card begins (default 24)
   title: string;
   subtitle?: string;
   /** Per-type sample data (see CardConfig). */
@@ -110,6 +116,16 @@ export interface Card {
   notes?: string;
   /** Mockup of the chart's hover tooltip. */
   tooltip?: TooltipMock;
+  /** For `type === 'filter'`: the standalone filter this card represents (no card container). */
+  filter?: Filter;
+  /** Optional in-card filter bar rendered on top of the chart, within the card. */
+  cardFilter?: CardFilter;
+}
+
+/** An in-card filter bar shown above a chart when individual chart filtering is enabled. */
+export interface CardFilter {
+  enabled: boolean;
+  filters: Filter[];
 }
 
 export interface Section {

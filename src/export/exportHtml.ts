@@ -1,6 +1,7 @@
 import type { Card, Filter, Project, Section } from '../store/types';
 import { SAMPLE_TABLE } from '../charts/chartOptions';
 import { notesHtml, tooltipMockHtml } from '../charts/annotations';
+import { computeRowGroups, rowUsedSpan } from '../store/rows';
 import { chartToSvg } from './chartToSvg';
 
 function esc(s = ''): string {
@@ -39,24 +40,59 @@ function cardBodyHtml(card: Card): string {
   return `<div style="height:180px;padding:0 8px 8px;">${chartToSvg(card.type, card.config)}</div>`;
 }
 
+/** A horizontal filter row, one control per filter (used inline on top of a chart). */
+function cardFilterBarHtml(filters: Filter[]): string {
+  if (!filters.length) return '';
+  const items = filters
+    .map(
+      (f) =>
+        `<div style="flex:1 1 140px;min-width:120px;"><div style="font-size:11px;color:#8c8c8c;margin-bottom:2px;">${esc(f.label)}</div>${filterControl(f)}</div>`
+    )
+    .join('');
+  return `<div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 12px 8px;border-bottom:1px solid #f5f5f5;margin-bottom:8px;">${items}</div>`;
+}
+
+function offsetSpacerHtml(card: Card): string {
+  // Mirrors Antd Col `offset`: empty columns to the left of the card.
+  return card.offset ? `<div style="grid-column:span ${card.offset};"></div>` : '';
+}
+
 function cardHtml(card: Card, template: string): string {
+  // Standalone filter component — no card container chrome.
+  if (card.type === 'filter' && card.filter) {
+    const f = card.filter;
+    const body = `<div style="padding:4px;"><div style="font-size:12px;color:#555;margin-bottom:4px;">${esc(f.label)}</div>${filterControl(f)}</div>`;
+    return `${offsetSpacerHtml(card)}<div style="grid-column:span ${card.span};min-height:40px;">${body}</div>`;
+  }
+
+  const filterBar = card.cardFilter?.enabled ? cardFilterBarHtml(card.cardFilter.filters) : '';
   const inner = `<div style="display:flex;flex-direction:column;height:100%;position:relative;">
     ${card.tooltip?.enabled ? `<div style="position:absolute;top:46px;right:12px;z-index:3;">${tooltipMockHtml(card.tooltip)}</div>` : ''}
     <div style="padding:10px 12px 4px;">
       <div style="font-size:14px;font-weight:600;">${esc(card.title)}</div>
       ${card.subtitle ? `<div style="font-size:12px;color:#8c8c8c;">${esc(card.subtitle)}</div>` : ''}
     </div>
+    ${filterBar}
     <div style="flex:1;min-height:0;">${cardBodyHtml(card)}</div>
     ${card.notes ? notesHtml(card.notes) : ''}
   </div>`;
   const tpl = card.containerHtml || template;
   const chrome = tpl.includes('{{content}}') ? tpl.replace('{{content}}', inner) : tpl + inner;
-  return `<div style="grid-column:span ${card.span};min-height:120px;">${chrome}</div>`;
+  return `${offsetSpacerHtml(card)}<div style="grid-column:span ${card.span};min-height:120px;">${chrome}</div>`;
 }
 
 function sectionHtml(section: Section, template: string): string {
-  const cards = section.cards.map((c) => cardHtml(c, template)).join('\n');
-  return `<section style="margin-bottom:20px;">
+  const rows = computeRowGroups(section.cards);
+  const cards = rows
+    .map((row, ri) => {
+      const html = row.map((c) => cardHtml(c, template)).join('\n');
+      const leftover = 24 - rowUsedSpan(row);
+      // Fill the rest of the row so the next row's first card wraps below it.
+      const spacer = ri < rows.length - 1 && leftover > 0 ? `<div style="grid-column:span ${leftover};"></div>` : '';
+      return html + spacer;
+    })
+    .join('\n');
+  return `<section id="cwb-sec-${section.id}" style="margin-bottom:20px;scroll-margin-top:16px;">
     ${section.title || section.subtitle ? `<div style="margin-bottom:10px;">
       ${section.title ? `<h3 style="margin:0;font-size:16px;">${esc(section.title)}</h3>` : ''}
       ${section.subtitle ? `<div style="font-size:12px;color:#8c8c8c;">${esc(section.subtitle)}</div>` : ''}
@@ -101,11 +137,25 @@ export function buildHtml(project: Project): string {
   const sectionsHtml = sections.map((s) => sectionHtml(s, cardContainerTemplate)).join('\n');
 
   const hasAdvanced = filters.advanced.length > 0;
+  const showSectionNav = sections.length > 1;
+
+  const sectionNavHtml = showSectionNav
+    ? `<nav style="margin-bottom:18px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px;border-bottom:1px solid #f0f0f0;padding-bottom:6px;">Sections</div>
+        ${sections
+          .map(
+            (s, i) =>
+              `<a href="#cwb-sec-${s.id}" style="display:block;padding:4px 0;font-size:13px;color:#1677ff;text-decoration:none;">${esc(s.title || `Section ${i + 1}`)}</a>`
+          )
+          .join('')}
+      </nav>`
+    : '';
 
   const filtersHtml =
-    filters.common.length || hasAdvanced
+    filters.common.length || hasAdvanced || showSectionNav
       ? `<aside style="width:260px;flex:0 0 auto;background:#fff;border-left:1px solid #eee;padding:16px;overflow:auto;">
-          <div style="font-weight:600;margin-bottom:14px;">Filters</div>
+          ${sectionNavHtml}
+          ${filters.common.length || hasAdvanced ? `<div style="font-weight:600;margin-bottom:14px;">Filters</div>` : ''}
           ${filterGroup('Common Filter', filters.common)}
           ${hasAdvanced ? `<label for="cwb-adv" class="cwb-adv-btn">&#9881; Advanced Filter</label>` : ''}
         </aside>`
@@ -133,6 +183,7 @@ export function buildHtml(project: Project): string {
 <title>${esc(meta.name)}</title>
 <style>
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color:#141414; background:#f3f4f7; }
   .cwb-frame { display:flex; min-height:100vh; }
   .cwb-col { display:flex; flex-direction:column; flex:1; min-width:0; }

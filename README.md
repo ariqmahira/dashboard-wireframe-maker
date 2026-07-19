@@ -21,6 +21,10 @@ card chrome). Built with **React + Vite + Ant Design + ECharts**.
 - **Right-side filter panel** with a **Common Filter** group plus an **Advanced Filter**
   button that opens a modal; 4 filter types: single select, multi select, single date,
   date range.
+- **Draggable filter components** — drag a filter from the palette onto a section. Filter
+  components render **without a card container** (bare control) and reorder like any card.
+- **Per-chart filters** — each card can toggle on an inline filter bar rendered **on top of
+  the chart, within the card**, with its own set of filter controls.
 - **Custom HTML placeholders** for header, sidemenu, and footer, plus a customizable
   **card container** template (global) or per-card override — mimic your real site.
 - **Save / Load** the wireframe as a JSON project file.

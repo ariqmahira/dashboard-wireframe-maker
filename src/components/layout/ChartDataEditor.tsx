@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Button, ColorPicker, Form, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
-import { DeleteOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
+import { DeleteOutlined, Html5Outlined, PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import type { Card, CardConfig, ChartSeries } from '../../store/types';
 import { useBuilderStore } from '../../store/useBuilderStore';
 import { DEFAULT_CATS, DEFAULT_ECHARTS_JSON, DEFAULT_NAMED, SAMPLE_TABLE, defaultSeries } from '../../charts/chartOptions';
@@ -40,7 +40,15 @@ const rowsToText = (rows?: string[][]) => (rows ?? []).map((r) => r.join(', ')).
 const parseRows = (t: string) =>
   t.split('\n').filter((l) => l.trim()).map((l) => l.split(',').map((c) => c.trim()));
 
-export default function ChartDataEditor({ card, sectionId }: { card: Card; sectionId: string }) {
+export default function ChartDataEditor({
+  card,
+  sectionId,
+  onEditCustomHtml,
+}: {
+  card: Card;
+  sectionId: string;
+  onEditCustomHtml: (card: Card, sectionId: string) => void;
+}) {
   const { updateCard } = useBuilderStore.getState();
   const fileRef = useRef<HTMLInputElement>(null);
   const cfg = card.config ?? {};
@@ -242,13 +250,12 @@ export default function ChartDataEditor({ card, sectionId }: { card: Card; secti
   if (t === 'customHtml') {
     return (
       <Form.Item label="Custom HTML">
-        <Input.TextArea
-          rows={6}
-          value={cfg.customHtml ?? ''}
-          placeholder="<div>…your markup…</div>"
-          style={{ fontFamily: 'monospace', fontSize: 12 }}
-          onChange={(e) => set({ customHtml: e.target.value })}
-        />
+        <Button block icon={<Html5Outlined />} onClick={() => onEditCustomHtml(card, sectionId)}>
+          Edit HTML…
+        </Button>
+        <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 6 }}>
+          {cfg.customHtml?.trim() ? 'Custom markup set — click to edit visually or as code.' : 'No content yet — click to add markup.'}
+        </Typography.Text>
       </Form.Item>
     );
   }

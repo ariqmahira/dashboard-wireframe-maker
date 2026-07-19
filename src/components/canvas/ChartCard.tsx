@@ -10,6 +10,8 @@ import {
 import ChartRenderer from '../../charts/ChartRenderer';
 import { notesHtml, tooltipMockHtml } from '../../charts/annotations';
 import { SlottedHtml } from '../common/Html';
+import { FilterControl } from '../filters/FilterItem';
+import CardFilterBar from '../filters/CardFilterBar';
 import { useBuilderStore } from '../../store/useBuilderStore';
 import type { Card } from '../../store/types';
 
@@ -30,6 +32,8 @@ export default function ChartCard({
   const selected =
     selection?.kind === 'card' && selection.cardId === card.id;
 
+  const isFilter = card.type === 'filter';
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id, data: { sectionId } });
 
@@ -41,8 +45,66 @@ export default function ChartCard({
 
   const html = card.containerHtml || template;
 
+  // Standalone filter component — rendered without any card container.
+  if (isFilter) {
+    return (
+      <Col span={card.span} offset={card.offset} style={style}>
+        <div
+          ref={setNodeRef}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!preview) select({ kind: 'card', sectionId, cardId: card.id });
+          }}
+          style={{
+            position: 'relative',
+            outline: selected && !preview ? '2px solid #1677ff' : '2px solid transparent',
+            borderRadius: 8,
+            transition: 'outline-color .15s',
+            padding: 4,
+          }}
+        >
+          {!preview && (
+            <div
+              className="cwb-card-toolbar"
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                zIndex: 5,
+                background: 'rgba(255,255,255,0.92)',
+                borderRadius: 6,
+                boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Space size={0}>
+                <Tooltip title="Drag">
+                  <Button type="text" size="small" icon={<DragOutlined />} {...attributes} {...listeners} style={{ cursor: 'grab' }} />
+                </Tooltip>
+                <Tooltip title="Duplicate">
+                  <Button type="text" size="small" icon={<CopyOutlined />} onClick={() => duplicateCard(sectionId, card.id)} />
+                </Tooltip>
+                <Tooltip title="Delete">
+                  <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => removeCard(sectionId, card.id)} />
+                </Tooltip>
+              </Space>
+            </div>
+          )}
+          {card.filter && (
+            <>
+              <Typography.Text style={{ fontSize: 12, color: '#555', display: 'block', marginBottom: 4 }}>
+                {card.filter.label}
+              </Typography.Text>
+              <FilterControl filter={card.filter} />
+            </>
+          )}
+        </div>
+      </Col>
+    );
+  }
+
   return (
-    <Col span={card.span} style={style}>
+    <Col span={card.span} offset={card.offset} style={style}>
       <div
         ref={setNodeRef}
         onClick={(e) => {
@@ -118,6 +180,7 @@ export default function ChartCard({
                 </Typography.Text>
               )}
             </div>
+            {card.cardFilter?.enabled && <CardFilterBar filters={card.cardFilter.filters} />}
             <div style={{ flex: 1, minHeight: 0, padding: '0 8px 8px' }}>
               <ChartRenderer card={card} />
             </div>
